@@ -164,6 +164,10 @@ def send_email(success):
         body = "Error during SnapRAID job:\n\n\n"
 
     log = email_log.getvalue()
+
+    # Remove progress messages
+    log = re.sub("\n[\d :\-,]*\[OUTPUT] \d+%, \d+ MB(?:, \d+ MB\/s, \d+ (?:block|stripe)\/s, CPU \d+%, [\d:]+ ETA)?", "", log)
+
     maxsize = config['email'].get('maxsize', 500) * 1024
     if maxsize and len(log) > maxsize:
         cut_lines = log.count("\n", maxsize // 2, -maxsize // 2)
