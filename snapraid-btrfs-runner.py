@@ -40,15 +40,29 @@ def tee_log(infile, out_lines, log_level):
 
 # Function to send telegram notification
 def send_telegram_notification(success, log):
+    # For success, keep it simple
+    if success:
+        message = "✅ SnapRAID job completed successfully."
+    else:
+        # For errors, truncate and escape problematic characters
+        log_excerpt = log[-3000:] if len(log) > 3000 else log
+        # Escape special Markdown characters
+        log_excerpt = log_excerpt.replace('```', '`\``').replace('_', '\_').replace('*', '\*').replace('[', '\[').replace(']', '\]')
+        message = f"❌ Error during SnapRAID job:\n\n```\n{log_excerpt}\n```"
+
     payload = {
         "chat_id": telegram_chatid,
-        "text": f"✅ SnapRAID job completed successfully." if success else f"❌ Error during SnapRAID job: ``` {log} ```",
+        "text": message,
         "disable_notification": False,
-        "parse_mode": "Markdown"
+        "parse_mode": "MarkdownV2"
     }
 
     try:
-        response = requests.post(f"https://api.telegram.org/bot{telegram_botid}/sendMessage", data=json.dumps(payload), headers={"Content-Type": "application/json"})
+        response = requests.post(
+            f"https://api.telegram.org/bot{telegram_botid}/sendMessage", 
+            json=payload,
+            headers={"Content-Type": "application/json"}
+        )
         response.raise_for_status()
         logging.info("Telegram notification sent successfully.")
     except requests.exceptions.HTTPError as errh:
