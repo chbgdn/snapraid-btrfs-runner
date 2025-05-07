@@ -47,7 +47,7 @@ def send_telegram_notification(success, log):
         # For errors, truncate and escape problematic characters
         log_excerpt = log[-3000:] if len(log) > 3000 else log
         # Escape special Markdown characters
-        log_excerpt = log_excerpt.replace('```', '`\``').replace('_', '\_').replace('*', '\*').replace('[', '\[').replace(']', '\]')
+        log_excerpt = log_excerpt.replace('```', r'`\``').replace('_', r'\_').replace('*', r'\*').replace('[', r'\[').replace(']', r'\]')
         message = f"❌ Error during SnapRAID job:\n\n```\n{log_excerpt}\n```"
 
     payload = {
@@ -170,7 +170,7 @@ def send_email(success):
     log = email_log.getvalue()
 
     # Remove progress messages
-    log = re.sub("\n[\d :\-,]*\[OUTPUT] \d+%, \d+ MB(?:, \d+ MB\/s, \d+ (?:block|stripe)\/s, CPU \d+%, [\d:]+ ETA)?", "", log)
+    log = re.sub(r"\n[\d :\-,]*\[OUTPUT] \d+%, \d+ MB(?:, \d+ MB\/s, \d+ (?:block|stripe)\/s, CPU \d+%, [\d:]+ ETA)?", "", log)
 
     maxsize = config['email'].get('maxsize', 500) * 1024
     if maxsize and len(log) > maxsize:
