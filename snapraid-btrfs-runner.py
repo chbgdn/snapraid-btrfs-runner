@@ -4,6 +4,7 @@ import configparser
 import logging
 import logging.handlers
 import os.path
+import re
 import shutil
 import subprocess
 import sys
@@ -38,17 +39,30 @@ def tee_log(infile, out_lines, log_level):
     t.start()
     return t
 
+def escape_markdown(text, version = 2, entity_type = None):
+    if int(version) == 1:
+        escape_chars = r"_*`["
+    elif int(version) == 2:
+        if entity_type in ["pre", "code"]:
+            escape_chars = r"\`"
+        elif entity_type in ["text_link", "custom_emoji"]:
+            escape_chars = r"\)"
+        else:
+            escape_chars = r"\_*[]()~`>#+-=|{}.!"
+    else:
+        raise ValueError("Markdown version must be either 1 or 2!")
+
+    return re.sub(f"([{re.escape(escape_chars)}])", r"\\\1", text)
+
 # Function to send telegram notification
 def send_telegram_notification(success, log):
     # For success, keep it simple
     if success:
-        message = "✅ SnapRAID job completed successfully."
+        message = escape_markdown("✅ SnapRAID job completed successfully.")
     else:
-        # For errors, truncate and escape problematic characters
+        # For errors, truncate
         log_excerpt = log[-3000:] if len(log) > 3000 else log
-        # Escape special Markdown characters
-        log_excerpt = log_excerpt.replace('```', r'`\``').replace('_', r'\_').replace('*', r'\*').replace('[', r'\[').replace(']', r'\]')
-        message = f"❌ Error during SnapRAID job:\n\n```\n{log_excerpt}\n```"
+        message = f"❌ Error during SnapRAID job:\n\n```\n{escape_markdown(log_excerpt)}\n```"
 
     payload = {
         "chat_id": telegram_chatid,
